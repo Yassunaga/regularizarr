@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", "Inter", ui-sans-serif, sans-serif;
+
+  --color-bg-top: #0c0f14;
+  --color-bg-bottom: #10141c;
+  --color-card: #151922;
+  --color-card2: #101722;
+  --color-border-soft: #2b3444;
+  --color-muted: #a8b0bd;
+  --color-primary: #e1a32d;
+  --color-primary-light: #efb94e;
+  --color-primary-dark: #d99a21;
+  --color-whats: #25d366;
+  --color-whats-dark: #1fb354;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
+  background-attachment: fixed;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dark date picker */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+/* Section reveal animation */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  opacity: 0;
+}
+.reveal.is-visible {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}

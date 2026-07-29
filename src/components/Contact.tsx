@@ -3,13 +3,13 @@ import { Mail, Phone, MapPin } from "./Icons";
 
 export default function Contact() {
   return (
-    <section id="contato" className="px-4 py-16 sm:px-6">
+    <section id="contato" className="bg-white px-4 pb-24 pt-8 text-[#111827] sm:px-6">
       <div className="mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Fale Conosco">
+        <SectionHeading eyebrow="Fale Conosco" tone="light">
           Entre em <span className="text-primary">Contato</span>
         </SectionHeading>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mx-auto mt-12 flex max-w-md flex-col gap-7">
           <ContactCard
             icon={<Mail width={20} height={20} />}
             label="Email"
@@ -45,21 +45,21 @@ function ContactCard({
   href?: string;
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-3xl border border-border-soft bg-card/60 p-6">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-primary-light to-primary-dark text-[#231805]">
+    <div className="flex items-start gap-4">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-muted">{label}</p>
+        <p className="font-bold text-[#111827]">{label}</p>
         {href ? (
           <a
             href={href}
-            className="mt-0.5 block break-words font-semibold text-white transition-colors hover:text-primary"
+            className="mt-0.5 block break-words text-[#5d6b7d] transition-colors hover:text-primary"
           >
             {value}
           </a>
         ) : (
-          <p className="mt-0.5 font-medium text-white">{value}</p>
+          <p className="mt-0.5 text-[#5d6b7d]">{value}</p>
         )}
       </div>
     </div>

@@ -3,7 +3,7 @@ import { BENEFITS } from "../data/benefits";
 
 export default function Benefits() {
   return (
-    <section className="px-4 py-16 sm:px-6">
+    <section className="bg-[#101722] px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <SectionHeading eyebrow="Vantagens">
           Por que <span className="text-primary">regularizar</span> sua obra?

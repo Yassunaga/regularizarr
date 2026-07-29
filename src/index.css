@@ -59,3 +59,20 @@ input[type="date"] {
 .reveal.is-visible {
   animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+/* Clean PDF/print output: header appears once, no floating button */
+@media print {
+  html {
+    scroll-padding-top: 0;
+  }
+  header {
+    position: static !important;
+    box-shadow: none !important;
+  }
+  a[aria-label="Falar no WhatsApp"] {
+    display: none !important;
+  }
+  body {
+    background: #0c0f14 !important;
+  }
+}

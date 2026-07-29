@@ -6,7 +6,7 @@ export default function About() {
     <section className="px-4 py-16 sm:px-6">
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
         {/* photo card */}
-        <div className="relative">
+        <div className="relative mx-auto w-full max-w-md lg:mx-0">
           <div className="overflow-hidden rounded-3xl border border-border-soft shadow-2xl shadow-black/40">
             <img
               src={ENGINEER_IMG}
@@ -38,6 +38,7 @@ export default function About() {
           <h2 className="font-display text-3xl font-extrabold leading-tight sm:text-4xl">
             Quem <span className="text-primary">Somos</span>
           </h2>
+          <div className="mt-3 h-1 w-16 rounded-full bg-primary" />
           <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-muted sm:text-base">
             <p>
               A <strong className="text-white">RR Regularização</strong> é uma

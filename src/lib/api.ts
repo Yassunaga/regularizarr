@@ -3,7 +3,8 @@
  * Docs: https://inss-calculator.onrender.com/docs
  */
 
-const API_BASE = "https://inss-calculator.onrender.com";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ?? "https://inss-calculator.onrender.com";
 
 /** Payload accepted by POST /calculate/ (values must match the API enums). */
 export interface CalculateRequest {

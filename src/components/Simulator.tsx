@@ -43,6 +43,8 @@ interface FullResult {
   telefone: string;
   categoriaLabel: string;
   destinacaoLabel: string;
+  areaPrincipal: number;
+  piscinaQuadra: number;
 }
 
 const fieldClass =
@@ -81,6 +83,8 @@ export default function Simulator() {
     const telefone = String(fd.get("telefone") ?? "").trim();
     const categoria = String(fd.get("categoria") ?? "");
     const destinacao = String(fd.get("destinacao") ?? "");
+    const areaPrincipal = Number(fd.get("areaConstruida") ?? 0);
+    const piscinaQuadra = Number(fd.get("areaComplementar") ?? 0);
 
     const payload: CalculateRequest = {
       nome,
@@ -90,8 +94,8 @@ export default function Simulator() {
       destinacao,
       tipo_de_obra: String(fd.get("tipoObra") ?? ""),
       estado: String(fd.get("estado") ?? ""),
-      area_principal: Number(fd.get("areaConstruida") ?? 0),
-      piscina_quadra_esportiva: Number(fd.get("areaComplementar") ?? 0),
+      area_principal: areaPrincipal,
+      piscina_quadra_esportiva: piscinaQuadra,
     };
 
     setLoading(true);
@@ -104,6 +108,8 @@ export default function Simulator() {
         telefone,
         categoriaLabel: labelOf(CATEGORIAS, categoria),
         destinacaoLabel: labelOf(DESTINACOES, destinacao),
+        areaPrincipal,
+        piscinaQuadra,
       });
       setTimeout(() => {
         document
@@ -287,20 +293,27 @@ export default function Simulator() {
                 especializado.
               </p>
 
-              <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+              <h4 className="mt-5 text-xs font-bold uppercase tracking-wide text-[#617084]">
+                Dados do cálculo
+              </h4>
+              <div className="mt-2.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                 <ResultItem label="Responsável" value={result.api.responsavel} />
+                <ResultItem label="Categoria" value={result.categoriaLabel} />
+                <ResultItem label="Destinação" value={result.destinacaoLabel} />
                 <ResultItem label="Tipo de obra" value={result.api.tipo_de_obra} />
+                <ResultItem label="Estado" value={result.api.estado} />
+                <ResultItem label="Área construída" value={`${result.areaPrincipal} m²`} />
+                <ResultItem label="Piscina / Quadra esportiva" value={`${result.piscinaQuadra} m²`} />
                 <ResultItem label="Área total" value={`${result.api.area_total} m²`} />
                 <ResultItem label="VAU" value={formatCurrency(result.api.vau)} />
                 <ResultItem label="Mês de referência" value={result.api.mes_de_referencia} />
-                <ResultItem label="Estado" value={result.api.estado} />
               </div>
 
               <div className="mt-4 rounded-2xl bg-gradient-to-b from-primary-light to-primary-dark p-5 text-center text-2xl font-black text-[#2a1e05]">
                 INSS estimado: {formatCurrency(result.api.imposto_a_pagar)}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-[#f2e0a7] bg-[#fff7df] p-5 text-2xl font-extrabold text-[#845707]">
+              <div className="mt-4 rounded-2xl border border-[#f3b4b4] bg-[#fdecec] p-5 text-center text-2xl font-extrabold text-[#c0392b]">
                 Em muitos casos, é possível reduzir legalmente até 90% desse
                 custo.
               </div>

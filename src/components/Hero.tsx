@@ -8,7 +8,7 @@ const HERO_IMG =
   "https://regularizarr.lovable.app/assets/hero-construction-BD0Ux-Mi.png";
 
 const STATS = [
-  { value: "+110", label: "Obras regularizadas" },
+  { value: "+350", label: "Obras regularizadas" },
   { value: "100%", label: "Clientes satisfeitos" },
   { value: "Todo", label: "Brasil" },
 ];

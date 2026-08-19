@@ -39,8 +39,6 @@ const INFO = [
 /** Everything shown on the result card: the API response plus the input extras. */
 interface FullResult {
   api: CalculateResponse;
-  nome: string;
-  telefone: string;
   categoriaLabel: string;
   destinacaoLabel: string;
   areaPrincipal: number;
@@ -54,7 +52,7 @@ const labelClass = "mb-2 block text-[13px] font-bold text-[#eef3fb]";
 
 function buildMessage(r: FullResult) {
   return (
-    `Olá, me chamo ${r.nome} e fiz uma simulação do custo do INSS da minha obra.\n\n` +
+    `Olá! Fiz uma simulação do custo do INSS da minha obra.\n\n` +
     `*Dados da simulação:*\n` +
     `- Responsável: ${r.api.responsavel}\n` +
     `- Categoria: ${r.categoriaLabel}\n` +
@@ -64,7 +62,6 @@ function buildMessage(r: FullResult) {
     `- VAU: ${formatCurrency(r.api.vau)}\n` +
     `- Mês de referência: ${r.api.mes_de_referencia}\n` +
     `- Estado: ${r.api.estado}\n` +
-    `- Telefone: ${r.telefone}\n` +
     `- INSS estimado: ${formatCurrency(r.api.imposto_a_pagar)}\n\n` +
     `Quero entender se existe possibilidade de reduzir legalmente esse valor e quais seriam os próximos passos.`
   );
@@ -79,16 +76,12 @@ export default function Simulator() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    const nome = String(fd.get("nome") ?? "").trim();
-    const telefone = String(fd.get("telefone") ?? "").trim();
     const categoria = String(fd.get("categoria") ?? "");
     const destinacao = String(fd.get("destinacao") ?? "");
     const areaPrincipal = Number(fd.get("areaConstruida") ?? 0);
     const piscinaQuadra = Number(fd.get("areaComplementar") ?? 0);
 
     const payload: CalculateRequest = {
-      nome,
-      telefone,
       responsavel: String(fd.get("responsavel") ?? ""),
       categoria,
       destinacao,
@@ -104,8 +97,6 @@ export default function Simulator() {
       const api = await calculateInss(payload);
       setResult({
         api,
-        nome,
-        telefone,
         categoriaLabel: labelOf(CATEGORIAS, categoria),
         destinacaoLabel: labelOf(DESTINACOES, destinacao),
         areaPrincipal,
@@ -171,36 +162,6 @@ export default function Simulator() {
 
           <form onSubmit={onSubmit}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass} htmlFor="nome">
-                  Nome
-                </label>
-                <input
-                  id="nome"
-                  name="nome"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Seu nome"
-                  className={fieldClass}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={labelClass} htmlFor="telefone">
-                  Telefone / WhatsApp
-                </label>
-                <input
-                  id="telefone"
-                  name="telefone"
-                  type="tel"
-                  autoComplete="tel"
-                  placeholder="(00) 00000-0000"
-                  className={fieldClass}
-                  required
-                />
-              </div>
-
               <div>
                 <label className={labelClass} htmlFor="responsavel">
                   Responsável pela obra

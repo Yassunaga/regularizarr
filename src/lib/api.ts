@@ -8,8 +8,6 @@ const API_BASE =
 
 /** Payload accepted by POST /calculate/ (values must match the API enums). */
 export interface CalculateRequest {
-  nome: string;
-  telefone: string;
   responsavel: string;
   categoria: string;
   destinacao: string;

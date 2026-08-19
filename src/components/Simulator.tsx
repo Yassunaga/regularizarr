@@ -1,17 +1,17 @@
 import { useState, type FormEvent } from "react";
+import { formatCurrency } from "../lib/format";
 import {
-  estimate,
-  formatCurrency,
-  formatDate,
-  type SimulatorInput,
-  type SimulatorResult,
-} from "../lib/simulator";
+  calculateInss,
+  type CalculateRequest,
+  type CalculateResponse,
+} from "../lib/api";
 import {
   RESPONSAVEIS,
   CATEGORIAS,
   DESTINACOES,
   TIPOS_OBRA,
   UFS,
+  labelOf,
 } from "../data/ufs";
 import { WHATSAPP_NUMBER, whatsappLink } from "../lib/whatsapp";
 
@@ -36,56 +36,90 @@ const INFO = [
   },
 ];
 
+/** Everything shown on the result card: the API response plus the input extras. */
+interface FullResult {
+  api: CalculateResponse;
+  nome: string;
+  telefone: string;
+  categoriaLabel: string;
+  destinacaoLabel: string;
+}
+
 const fieldClass =
   "h-14 w-full rounded-2xl border border-[#3a465a] bg-[#0f1724] px-4 text-[15px] text-white outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15";
 
 const labelClass = "mb-2 block text-[13px] font-bold text-[#eef3fb]";
 
-function buildMessage(r: SimulatorResult, categoria: string, destinacao: string) {
+function buildMessage(r: FullResult) {
   return (
-    `Olá, me chamo Cliente e fiz uma simulação do custo do INSS da minha obra.\n\n` +
+    `Olá, me chamo ${r.nome} e fiz uma simulação do custo do INSS da minha obra.\n\n` +
     `*Dados da simulação:*\n` +
-    `- Responsável: ${r.responsavel}\n` +
-    `- Categoria: ${categoria}\n` +
-    `- Data de início da obra: ${formatDate(r.dataInicio)}\n` +
-    `- Data de término da obra: ${formatDate(r.dataFim)}\n` +
-    `- Destinação: ${destinacao}\n` +
-    `- Tipo de obra: ${r.tipoObra}\n` +
-    `- Área total: ${r.areaTotal} m²\n` +
-    `- VAU: ${formatCurrency(r.vau)}\n` +
-    `- Mês de referência: ${r.mesReferencia}\n` +
-    `- Estado: ${r.estado}\n` +
-    `- INSS estimado: ${formatCurrency(r.inssAPagar)}\n\n` +
+    `- Responsável: ${r.api.responsavel}\n` +
+    `- Categoria: ${r.categoriaLabel}\n` +
+    `- Destinação: ${r.destinacaoLabel}\n` +
+    `- Tipo de obra: ${r.api.tipo_de_obra}\n` +
+    `- Área total: ${r.api.area_total} m²\n` +
+    `- VAU: ${formatCurrency(r.api.vau)}\n` +
+    `- Mês de referência: ${r.api.mes_de_referencia}\n` +
+    `- Estado: ${r.api.estado}\n` +
+    `- Telefone: ${r.telefone}\n` +
+    `- INSS estimado: ${formatCurrency(r.api.imposto_a_pagar)}\n\n` +
     `Quero entender se existe possibilidade de reduzir legalmente esse valor e quais seriam os próximos passos.`
   );
 }
 
 export default function Simulator() {
-  const [result, setResult] = useState<SimulatorResult | null>(null);
-  const [meta, setMeta] = useState({ categoria: "", destinacao: "" });
+  const [result, setResult] = useState<FullResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const input: SimulatorInput = {
+
+    const nome = String(fd.get("nome") ?? "").trim();
+    const telefone = String(fd.get("telefone") ?? "").trim();
+    const categoria = String(fd.get("categoria") ?? "");
+    const destinacao = String(fd.get("destinacao") ?? "");
+
+    const payload: CalculateRequest = {
+      nome,
+      telefone,
       responsavel: String(fd.get("responsavel") ?? ""),
-      categoria: String(fd.get("categoria") ?? ""),
-      dataInicio: String(fd.get("dataInicio") ?? ""),
-      dataFim: String(fd.get("dataFim") ?? ""),
-      destinacao: String(fd.get("destinacao") ?? ""),
-      tipoObra: String(fd.get("tipoObra") ?? ""),
+      categoria,
+      destinacao,
+      tipo_de_obra: String(fd.get("tipoObra") ?? ""),
       estado: String(fd.get("estado") ?? ""),
-      areaConstruida: Number(fd.get("areaConstruida") ?? 0),
-      areaComplementar: Number(fd.get("areaComplementar") ?? 0),
+      area_principal: Number(fd.get("areaConstruida") ?? 0),
+      piscina_quadra_esportiva: Number(fd.get("areaComplementar") ?? 0),
     };
-    setMeta({ categoria: input.categoria, destinacao: input.destinacao });
-    const r = estimate(input);
-    setResult(r);
-    setTimeout(() => {
-      document
-        .getElementById("resultado")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
+
+    setLoading(true);
+    setError(null);
+    try {
+      const api = await calculateInss(payload);
+      setResult({
+        api,
+        nome,
+        telefone,
+        categoriaLabel: labelOf(CATEGORIAS, categoria),
+        destinacaoLabel: labelOf(DESTINACOES, destinacao),
+      });
+      setTimeout(() => {
+        document
+          .getElementById("resultado")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    } catch (err) {
+      setResult(null);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível calcular agora. Tente novamente em instantes.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -132,12 +166,44 @@ export default function Simulator() {
           <form onSubmit={onSubmit}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
+                <label className={labelClass} htmlFor="nome">
+                  Nome
+                </label>
+                <input
+                  id="nome"
+                  name="nome"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Seu nome"
+                  className={fieldClass}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="telefone">
+                  Telefone / WhatsApp
+                </label>
+                <input
+                  id="telefone"
+                  name="telefone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="(00) 00000-0000"
+                  className={fieldClass}
+                  required
+                />
+              </div>
+
+              <div>
                 <label className={labelClass} htmlFor="responsavel">
                   Responsável pela obra
                 </label>
                 <select id="responsavel" name="responsavel" className={fieldClass} required defaultValue="">
                   <option value="" disabled>Selecione</option>
-                  {RESPONSAVEIS.map((o) => <option key={o}>{o}</option>)}
+                  {RESPONSAVEIS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -145,25 +211,19 @@ export default function Simulator() {
                 <label className={labelClass} htmlFor="categoria">Categoria</label>
                 <select id="categoria" name="categoria" className={fieldClass} required defaultValue="">
                   <option value="" disabled>Selecione</option>
-                  {CATEGORIAS.map((o) => <option key={o}>{o}</option>)}
+                  {CATEGORIAS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
                 </select>
-              </div>
-
-              <div>
-                <label className={labelClass} htmlFor="dataInicio">Data de início da obra</label>
-                <input id="dataInicio" name="dataInicio" type="date" className={fieldClass} required />
-              </div>
-
-              <div>
-                <label className={labelClass} htmlFor="dataFim">Data de término da obra</label>
-                <input id="dataFim" name="dataFim" type="date" className={fieldClass} required />
               </div>
 
               <div className="sm:col-span-2">
                 <label className={labelClass} htmlFor="destinacao">Destinação</label>
                 <select id="destinacao" name="destinacao" className={fieldClass} required defaultValue="">
                   <option value="" disabled>Selecione</option>
-                  {DESTINACOES.map((o) => <option key={o}>{o}</option>)}
+                  {DESTINACOES.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -171,7 +231,9 @@ export default function Simulator() {
                 <label className={labelClass} htmlFor="tipoObra">Tipo de obra</label>
                 <select id="tipoObra" name="tipoObra" className={fieldClass} required defaultValue="">
                   <option value="" disabled>Selecione</option>
-                  {TIPOS_OBRA.map((o) => <option key={o}>{o}</option>)}
+                  {TIPOS_OBRA.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -189,16 +251,26 @@ export default function Simulator() {
               </div>
 
               <div>
-                <label className={labelClass} htmlFor="areaComplementar">Área complementar (m²)</label>
+                <label className={labelClass} htmlFor="areaComplementar">Piscina / Quadra esportiva (m²)</label>
                 <input id="areaComplementar" name="areaComplementar" type="number" min="0" step="0.01" defaultValue="0" className={fieldClass} />
               </div>
             </div>
 
+            {error && (
+              <div
+                role="alert"
+                className="mt-4 rounded-2xl border border-[#5c2b2b] bg-[#2a1414] px-4 py-3 text-sm font-semibold text-[#ffb4b4]"
+              >
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="mt-5 min-h-[58px] w-full rounded-2xl bg-gradient-to-b from-primary-light to-primary-dark text-[17px] font-extrabold text-[#231805] transition-transform hover:-translate-y-0.5"
+              disabled={loading}
+              className="mt-5 min-h-[58px] w-full rounded-2xl bg-gradient-to-b from-primary-light to-primary-dark text-[17px] font-extrabold text-[#231805] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
             >
-              Simular agora
+              {loading ? "Calculando..." : "Simular agora"}
             </button>
           </form>
         </div>
@@ -216,18 +288,16 @@ export default function Simulator() {
               </p>
 
               <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-                <ResultItem label="Responsável" value={result.responsavel} />
-                <ResultItem label="Tipo de obra" value={result.tipoObra} />
-                <ResultItem label="Área total" value={`${result.areaTotal} m²`} />
-                <ResultItem label="VAU" value={formatCurrency(result.vau)} />
-                <ResultItem label="Mês de referência" value={result.mesReferencia} />
-                <ResultItem label="Estado" value={result.estado} />
-                <ResultItem label="Data de início" value={formatDate(result.dataInicio)} />
-                <ResultItem label="Data de término" value={formatDate(result.dataFim)} />
+                <ResultItem label="Responsável" value={result.api.responsavel} />
+                <ResultItem label="Tipo de obra" value={result.api.tipo_de_obra} />
+                <ResultItem label="Área total" value={`${result.api.area_total} m²`} />
+                <ResultItem label="VAU" value={formatCurrency(result.api.vau)} />
+                <ResultItem label="Mês de referência" value={result.api.mes_de_referencia} />
+                <ResultItem label="Estado" value={result.api.estado} />
               </div>
 
               <div className="mt-4 rounded-2xl bg-gradient-to-b from-primary-light to-primary-dark p-5 text-center text-2xl font-black text-[#2a1e05]">
-                INSS estimado: {formatCurrency(result.inssAPagar)}
+                INSS estimado: {formatCurrency(result.api.imposto_a_pagar)}
               </div>
 
               <div className="mt-4 rounded-2xl border border-[#f2e0a7] bg-[#fff7df] p-5 text-2xl font-extrabold text-[#845707]">
@@ -236,10 +306,7 @@ export default function Simulator() {
               </div>
 
               <a
-                href={whatsappLink(
-                  WHATSAPP_NUMBER,
-                  buildMessage(result, meta.categoria, meta.destinacao),
-                )}
+                href={whatsappLink(WHATSAPP_NUMBER, buildMessage(result))}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 block rounded-2xl bg-gradient-to-b from-whats to-whats-dark p-4 text-center text-lg font-extrabold text-white"

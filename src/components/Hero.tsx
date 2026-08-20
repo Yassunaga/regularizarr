@@ -51,7 +51,7 @@ export default function Hero() {
               href="#sobre"
               className="inline-flex items-center justify-center rounded-2xl border border-[#111827]/15 bg-[#111827]/[0.04] px-7 py-4 text-base font-semibold text-[#111827] transition-colors hover:bg-[#111827]/[0.08]"
             >
-              Simulação rápida e atendimento especializado.
+              Calculadora INSS de obra
             </a>
           </div>
 
